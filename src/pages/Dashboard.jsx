@@ -9,7 +9,6 @@ export default function Dashboard({ clientId }) {
   const [sortField, setSortField] = useState("created_at");
   const [sortDirection, setSortDirection] = useState("desc");
 
-  // 🔹 Fetch Leads
   useEffect(() => {
     const fetchLeads = async () => {
       const { data, error } = await supabase
@@ -18,10 +17,7 @@ export default function Dashboard({ clientId }) {
         .eq("client_id", clientId)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.log(error);
-        return;
-      }
+      if (error) return;
 
       setLeads(data);
       setTotalLeads(data.length);
@@ -39,14 +35,12 @@ export default function Dashboard({ clientId }) {
     fetchLeads();
   }, [clientId]);
 
-  // 🔹 Priority logic
   const getPriority = (score) => {
     if (score >= 3) return "HOT";
     if (score === 2) return "WARM";
     return "COLD";
   };
 
-  // 🔹 Sorting
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -83,7 +77,6 @@ export default function Dashboard({ clientId }) {
     return 0;
   });
 
-  // 🔹 Mark Contacted
   const markContacted = async (leadId) => {
     const { error } = await supabase
       .from("leads")
@@ -99,14 +92,13 @@ export default function Dashboard({ clientId }) {
     }
   };
 
-  // 🔹 Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.reload();
   };
 
   return (
-    <div style={{ padding: 20, background: "#f5f6fa", minHeight: "100vh" }}>
+    <div style={{ padding: 15, background: "#f5f6fa", minHeight: "100vh" }}>
 
       {/* HEADER */}
       <div
@@ -114,30 +106,26 @@ export default function Dashboard({ clientId }) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 25,
+          flexWrap: "wrap",
+          gap: 10,
+          marginBottom: 20,
         }}
       >
         <div>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 600, color: "#222" }}>
-            Leads Dashboard
-          </h1>
-          <p style={{ margin: 0, fontSize: 13, color: "#777" }}>
-            Manage and track your leads efficiently
+          <h1 style={{ margin: 0, fontSize: 22 }}>Leads Dashboard</h1>
+          <p style={{ margin: 0, fontSize: 12, color: "#777" }}>
+            Manage your leads
           </p>
         </div>
 
         <button
           onClick={handleLogout}
           style={{
-            padding: "8px 16px",
+            padding: "8px 14px",
             background: "#e0e0e0",
-            border: "none",
             borderRadius: 8,
+            border: "none",
             cursor: "pointer",
-            fontSize: 13,
-            fontWeight: 500,
-            color: "#333",
-            transition: "0.2s",
           }}
           onMouseOver={(e) => {
             e.target.style.background = "#555";
@@ -145,7 +133,7 @@ export default function Dashboard({ clientId }) {
           }}
           onMouseOut={(e) => {
             e.target.style.background = "#e0e0e0";
-            e.target.style.color = "#333";
+            e.target.style.color = "#000";
           }}
         >
           Logout
@@ -153,30 +141,30 @@ export default function Dashboard({ clientId }) {
       </div>
 
       {/* METRICS */}
-      <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 15 }}>
         <div style={cardStyle}>
           <h4>Total Leads</h4>
           <h2>{totalLeads}</h2>
         </div>
 
         <div style={cardStyle}>
-          <h4>Leads (Last 7 Days)</h4>
+          <h4>Last 7 Days</h4>
           <h2>{weeklyLeads}</h2>
         </div>
       </div>
 
       {/* TABLE */}
-      <div style={tableCardStyle}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div style={{ ...tableCardStyle, overflowX: "auto" }}>
+        <table style={{ minWidth: "700px", borderCollapse: "collapse" }}>
 
           <thead>
             <tr style={headerRowStyle}>
-              <th style={clickable} onClick={() => handleSort("name")}>Name ⬍</th>
-              <th style={{ padding: "12px 10px" }}>Phone</th>
-              <th style={clickable} onClick={() => handleSort("estimated_band")}>Band ⬍</th>
-              <th style={clickable} onClick={() => handleSort("priority")}>Priority ⬍</th>
+              <th onClick={() => handleSort("name")} style={clickable}>Name</th>
+              <th>Phone</th>
+              <th onClick={() => handleSort("estimated_band")} style={clickable}>Band</th>
+              <th onClick={() => handleSort("priority")} style={clickable}>Priority</th>
               <th>Status</th>
-              <th style={clickable} onClick={() => handleSort("created_at")}>Time ⬍</th>
+              <th onClick={() => handleSort("created_at")} style={clickable}>Time</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -189,40 +177,30 @@ export default function Dashboard({ clientId }) {
                 <tr
                   key={lead.id}
                   style={rowStyle}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = "#f9fafb";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = "#fff";
-                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = "#f9fafb")}
+                  onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
                 >
-                  <td style={{ padding: "12px 10px" }}>{lead.name || "—"}</td>
-                  <td style={{ padding: "12px 10px" }}>{lead.phone}</td>
+                  <td style={cell}>{lead.name || "—"}</td>
+                  <td style={cell}>{lead.phone}</td>
 
-                  <td style={{ padding: "12px 10px" }}>
-                    <span style={bandStyle}>
-                      {lead.estimated_band || "N/A"}
-                    </span>
+                  <td style={cell}>
+                    <span style={bandStyle}>{lead.estimated_band || "N/A"}</span>
                   </td>
 
-                  <td style={{ padding: "12px 10px" }}>
-                    <span style={priorityStyle(priority)}>
-                      {priority}
-                    </span>
+                  <td style={cell}>
+                    <span style={priorityStyle(priority)}>{priority}</span>
                   </td>
 
-                  <td style={{ padding: "12px 10px" }}>
-                    <span style={statusStyle(lead.status)}>
-                      {lead.status}
-                    </span>
+                  <td style={cell}>
+                    <span style={statusStyle(lead.status)}>{lead.status}</span>
                   </td>
 
-                  <td style={{ padding: "12px 10px", fontSize: 12, color: "#666" }}>
+                  <td style={{ ...cell, fontSize: 12 }}>
                     {new Date(lead.created_at).toLocaleString()}
                   </td>
 
-                  <td style={{ padding: "10px" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
+                  <td style={cell}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <a href={`tel:${lead.phone}`}>
                         <button style={actionBtn}>📞</button>
                       </a>
@@ -231,10 +209,7 @@ export default function Dashboard({ clientId }) {
                         <button style={actionBtn}>💬</button>
                       </a>
 
-                      <button
-                        onClick={() => markContacted(lead.id)}
-                        style={actionBtn}
-                      >
+                      <button onClick={() => markContacted(lead.id)} style={actionBtn}>
                         ✓
                       </button>
                     </div>
@@ -254,17 +229,15 @@ export default function Dashboard({ clientId }) {
 // 🎨 Styles
 const cardStyle = {
   background: "#fff",
-  padding: 20,
+  padding: 15,
   borderRadius: 10,
-  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-  flex: 1,
+  flex: "1 1 150px",
 };
 
 const tableCardStyle = {
   background: "#fff",
   borderRadius: 10,
-  padding: 20,
-  boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+  padding: 15,
 };
 
 const headerRowStyle = {
@@ -274,29 +247,32 @@ const headerRowStyle = {
 
 const rowStyle = {
   borderBottom: "1px solid #eee",
-  transition: "0.2s",
 };
 
 const clickable = {
   cursor: "pointer",
 };
 
+const cell = {
+  padding: "10px",
+};
+
 const bandStyle = {
   background: "#e3f2fd",
-  padding: "4px 8px",
+  padding: "4px 6px",
   borderRadius: 6,
   fontSize: 12,
 };
 
 const statusStyle = (status) => ({
-  padding: "4px 8px",
+  padding: "4px 6px",
   borderRadius: 6,
   fontSize: 12,
   background: status === "CONTACTED" ? "#d4edda" : "#fff3cd",
 });
 
 const priorityStyle = (priority) => ({
-  padding: "4px 8px",
+  padding: "4px 6px",
   borderRadius: 6,
   fontSize: 12,
   background:
@@ -309,9 +285,7 @@ const priorityStyle = (priority) => ({
 
 const actionBtn = {
   border: "none",
-  padding: "6px 8px",
+  padding: "6px",
   borderRadius: 6,
-  cursor: "pointer",
   background: "#f1f3f5",
-  fontSize: 12,
 };
