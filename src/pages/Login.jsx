@@ -130,11 +130,20 @@ export default function Login({ setUser }) {
             borderRadius: 6,
             cursor: "pointer",
             fontWeight: "bold",
+            transition: "all 0.2s ease",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+          }}
+          onMouseOver={(e) => {
+            e.target.style.transform = "translateY(-2px)";
+            e.target.style.boxShadow = "0 8px 18px rgba(0,0,0,0.2)";
+          }}
+          onMouseOut={(e) => {
+            e.target.style.transform = "translateY(0)";
+            e.target.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
           }}
         >
           Login
         </button>
-
       </div>
     </div>
   );
