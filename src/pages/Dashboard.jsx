@@ -11,7 +11,7 @@ export default function Dashboard({ clientId }) {
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // 🔹 Handle resize
+  // 🔹 Responsive detection
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -48,12 +48,14 @@ export default function Dashboard({ clientId }) {
     fetchLeads();
   }, [clientId]);
 
+  // 🔹 Priority
   const getPriority = (score) => {
     if (score >= 3) return "HOT";
     if (score === 2) return "WARM";
     return "COLD";
   };
 
+  // 🔹 Sorting
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -90,6 +92,7 @@ export default function Dashboard({ clientId }) {
     return 0;
   });
 
+  // 🔹 Update status
   const markContacted = async (leadId) => {
     const { error } = await supabase
       .from("leads")
@@ -105,6 +108,7 @@ export default function Dashboard({ clientId }) {
     }
   };
 
+  // 🔹 Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.reload();
@@ -119,13 +123,12 @@ export default function Dashboard({ clientId }) {
         justifyContent: "space-between",
         alignItems: "center",
         flexWrap: "wrap",
-        gap: 10,
         marginBottom: 20
       }}>
         <div>
-          <h1 style={{ margin: 0 }}>Leads Dashboard</h1>
+          <h1 style={{ margin: 0, fontSize: 24 }}>Leads Dashboard</h1>
           <p style={{ margin: 0, fontSize: 12, color: "#777" }}>
-            Manage your leads
+            Manage your leads efficiently
           </p>
         </div>
 
@@ -174,16 +177,28 @@ export default function Dashboard({ clientId }) {
 
             return (
               <div key={lead.id} style={cardMobile}>
+
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <strong>{lead.name || "—"}</strong>
                   <span style={priorityStyle(priority)}>{priority}</span>
                 </div>
 
-                <div>📞 {lead.phone}</div>
-                <div><span style={bandStyle}>{lead.estimated_band || "N/A"}</span></div>
-                <div><span style={statusStyle(lead.status)}>{lead.status}</span></div>
+                <div style={labelRow}>
+                  <span style={label}>Phone:</span>
+                  <span>{lead.phone}</span>
+                </div>
 
-                <div style={{ fontSize: 12, color: "#666" }}>
+                <div style={labelRow}>
+                  <span style={label}>Band:</span>
+                  <span style={smallBadge}>{lead.estimated_band || "N/A"}</span>
+                </div>
+
+                <div style={labelRow}>
+                  <span style={label}>Status:</span>
+                  <span style={smallStatus(lead.status)}>{lead.status}</span>
+                </div>
+
+                <div style={{ fontSize: 11, color: "#777" }}>
                   {new Date(lead.created_at).toLocaleString()}
                 </div>
 
@@ -192,6 +207,7 @@ export default function Dashboard({ clientId }) {
                   <a href={`https://wa.me/91${lead.phone}`} target="_blank"><button style={actionBtn}>💬</button></a>
                   <button onClick={() => markContacted(lead.id)} style={actionBtn}>✓</button>
                 </div>
+
               </div>
             );
           })}
@@ -199,18 +215,18 @@ export default function Dashboard({ clientId }) {
 
       ) : (
 
-        // 💻 DESKTOP TABLE (UNCHANGED)
-        <div style={{ ...tableCardStyle, overflowX: "auto" }}>
-          <table style={{ minWidth: "700px", borderCollapse: "collapse" }}>
+        // 💻 DESKTOP TABLE (RESTORED)
+        <div style={tableCardStyle}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
 
             <thead>
               <tr style={headerRowStyle}>
-                <th style={clickable} onClick={() => handleSort("name")}>Name</th>
+                <th onClick={() => handleSort("name")} style={clickable}>Name</th>
                 <th>Phone</th>
-                <th style={clickable} onClick={() => handleSort("estimated_band")}>Band</th>
-                <th style={clickable} onClick={() => handleSort("priority")}>Priority</th>
+                <th onClick={() => handleSort("estimated_band")} style={clickable}>Band</th>
+                <th onClick={() => handleSort("priority")} style={clickable}>Priority</th>
                 <th>Status</th>
-                <th style={clickable} onClick={() => handleSort("created_at")}>Time</th>
+                <th onClick={() => handleSort("created_at")} style={clickable}>Time</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -221,17 +237,31 @@ export default function Dashboard({ clientId }) {
 
                 return (
                   <tr key={lead.id} style={rowStyle}>
-                    <td style={cell}>{lead.name}</td>
+                    <td style={cell}>{lead.name || "—"}</td>
                     <td style={cell}>{lead.phone}</td>
-                    <td style={cell}><span style={bandStyle}>{lead.estimated_band}</span></td>
-                    <td style={cell}><span style={priorityStyle(priority)}>{priority}</span></td>
-                    <td style={cell}><span style={statusStyle(lead.status)}>{lead.status}</span></td>
-                    <td style={cell}>{new Date(lead.created_at).toLocaleString()}</td>
+
                     <td style={cell}>
+                      <span style={bandStyle}>{lead.estimated_band || "N/A"}</span>
+                    </td>
+
+                    <td style={cell}>
+                      <span style={priorityStyle(priority)}>{priority}</span>
+                    </td>
+
+                    <td style={cell}>
+                      <span style={statusStyle(lead.status)}>{lead.status}</span>
+                    </td>
+
+                    <td style={{ ...cell, fontSize: 12 }}>
+                      {new Date(lead.created_at).toLocaleString()}
+                    </td>
+
+                    <td style={{ ...cell, display: "flex", gap: 6 }}>
                       <a href={`tel:${lead.phone}`}><button style={actionBtn}>📞</button></a>
                       <a href={`https://wa.me/91${lead.phone}`} target="_blank"><button style={actionBtn}>💬</button></a>
                       <button onClick={() => markContacted(lead.id)} style={actionBtn}>✓</button>
                     </td>
+
                   </tr>
                 );
               })}
@@ -265,6 +295,31 @@ const cardMobile = {
   borderRadius: 10,
 };
 
+const labelRow = {
+  display: "flex",
+  justifyContent: "space-between",
+  fontSize: 13,
+  marginTop: 6,
+};
+
+const label = {
+  color: "#666",
+};
+
+const smallBadge = {
+  background: "#e3f2fd",
+  padding: "2px 6px",
+  borderRadius: 4,
+  fontSize: 11,
+};
+
+const smallStatus = (status) => ({
+  background: status === "CONTACTED" ? "#d4edda" : "#fff3cd",
+  padding: "2px 6px",
+  borderRadius: 4,
+  fontSize: 11,
+});
+
 const headerRowStyle = {
   textAlign: "left",
   borderBottom: "1px solid #ddd",
@@ -280,19 +335,22 @@ const cell = { padding: "10px" };
 
 const bandStyle = {
   background: "#e3f2fd",
-  padding: "4px 6px",
+  padding: "4px 8px",
   borderRadius: 6,
+  fontSize: 12,
 };
 
 const statusStyle = (status) => ({
-  padding: "4px 6px",
+  padding: "4px 8px",
   borderRadius: 6,
+  fontSize: 12,
   background: status === "CONTACTED" ? "#d4edda" : "#fff3cd",
 });
 
 const priorityStyle = (priority) => ({
-  padding: "4px 6px",
+  padding: "4px 8px",
   borderRadius: 6,
+  fontSize: 12,
   background:
     priority === "HOT"
       ? "#f8d7da"
@@ -306,4 +364,5 @@ const actionBtn = {
   padding: "6px",
   borderRadius: 6,
   background: "#f1f3f5",
+  cursor: "pointer",
 };
