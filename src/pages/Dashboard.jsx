@@ -9,6 +9,19 @@ export default function Dashboard({ clientId }) {
   const [sortField, setSortField] = useState("created_at");
   const [sortDirection, setSortDirection] = useState("desc");
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // 🔹 Handle resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // 🔹 Fetch Leads
   useEffect(() => {
     const fetchLeads = async () => {
       const { data, error } = await supabase
@@ -98,21 +111,19 @@ export default function Dashboard({ clientId }) {
   };
 
   return (
-    <div style={{ padding: 15, background: "#f5f6fa", minHeight: "100vh" }}>
+    <div style={{ padding: 20, background: "#f5f6fa", minHeight: "100vh" }}>
 
       {/* HEADER */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 10,
-          marginBottom: 20,
-        }}
-      >
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 10,
+        marginBottom: 20
+      }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22 }}>Leads Dashboard</h1>
+          <h1 style={{ margin: 0 }}>Leads Dashboard</h1>
           <p style={{ margin: 0, fontSize: 12, color: "#777" }}>
             Manage your leads
           </p>
@@ -125,7 +136,7 @@ export default function Dashboard({ clientId }) {
             background: "#e0e0e0",
             borderRadius: 8,
             border: "none",
-            cursor: "pointer",
+            cursor: "pointer"
           }}
           onMouseOver={(e) => {
             e.target.style.background = "#555";
@@ -141,7 +152,7 @@ export default function Dashboard({ clientId }) {
       </div>
 
       {/* METRICS */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 15 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         <div style={cardStyle}>
           <h4>Total Leads</h4>
           <h2>{totalLeads}</h2>
@@ -153,75 +164,83 @@ export default function Dashboard({ clientId }) {
         </div>
       </div>
 
-      {/* TABLE */}
-      <div style={{ ...tableCardStyle, overflowX: "auto" }}>
-        <table style={{ minWidth: "700px", borderCollapse: "collapse" }}>
+      {/* CONTENT */}
+      {isMobile ? (
 
-          <thead>
-            <tr style={headerRowStyle}>
-              <th onClick={() => handleSort("name")} style={clickable}>Name</th>
-              <th>Phone</th>
-              <th onClick={() => handleSort("estimated_band")} style={clickable}>Band</th>
-              <th onClick={() => handleSort("priority")} style={clickable}>Priority</th>
-              <th>Status</th>
-              <th onClick={() => handleSort("created_at")} style={clickable}>Time</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+        // 📱 MOBILE CARDS
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {sortedLeads.map((lead) => {
+            const priority = getPriority(lead.score);
 
-          <tbody>
-            {sortedLeads.map((lead) => {
-              const priority = getPriority(lead.score);
+            return (
+              <div key={lead.id} style={cardMobile}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <strong>{lead.name || "—"}</strong>
+                  <span style={priorityStyle(priority)}>{priority}</span>
+                </div>
 
-              return (
-                <tr
-                  key={lead.id}
-                  style={rowStyle}
-                  onMouseOver={(e) => (e.currentTarget.style.background = "#f9fafb")}
-                  onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
-                >
-                  <td style={cell}>{lead.name || "—"}</td>
-                  <td style={cell}>{lead.phone}</td>
+                <div>📞 {lead.phone}</div>
+                <div><span style={bandStyle}>{lead.estimated_band || "N/A"}</span></div>
+                <div><span style={statusStyle(lead.status)}>{lead.status}</span></div>
 
-                  <td style={cell}>
-                    <span style={bandStyle}>{lead.estimated_band || "N/A"}</span>
-                  </td>
+                <div style={{ fontSize: 12, color: "#666" }}>
+                  {new Date(lead.created_at).toLocaleString()}
+                </div>
 
-                  <td style={cell}>
-                    <span style={priorityStyle(priority)}>{priority}</span>
-                  </td>
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <a href={`tel:${lead.phone}`}><button style={actionBtn}>📞</button></a>
+                  <a href={`https://wa.me/91${lead.phone}`} target="_blank"><button style={actionBtn}>💬</button></a>
+                  <button onClick={() => markContacted(lead.id)} style={actionBtn}>✓</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-                  <td style={cell}>
-                    <span style={statusStyle(lead.status)}>{lead.status}</span>
-                  </td>
+      ) : (
 
-                  <td style={{ ...cell, fontSize: 12 }}>
-                    {new Date(lead.created_at).toLocaleString()}
-                  </td>
+        // 💻 DESKTOP TABLE (UNCHANGED)
+        <div style={{ ...tableCardStyle, overflowX: "auto" }}>
+          <table style={{ minWidth: "700px", borderCollapse: "collapse" }}>
 
-                  <td style={cell}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      <a href={`tel:${lead.phone}`}>
-                        <button style={actionBtn}>📞</button>
-                      </a>
+            <thead>
+              <tr style={headerRowStyle}>
+                <th style={clickable} onClick={() => handleSort("name")}>Name</th>
+                <th>Phone</th>
+                <th style={clickable} onClick={() => handleSort("estimated_band")}>Band</th>
+                <th style={clickable} onClick={() => handleSort("priority")}>Priority</th>
+                <th>Status</th>
+                <th style={clickable} onClick={() => handleSort("created_at")}>Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
 
-                      <a href={`https://wa.me/91${lead.phone}`} target="_blank">
-                        <button style={actionBtn}>💬</button>
-                      </a>
+            <tbody>
+              {sortedLeads.map((lead) => {
+                const priority = getPriority(lead.score);
 
-                      <button onClick={() => markContacted(lead.id)} style={actionBtn}>
-                        ✓
-                      </button>
-                    </div>
-                  </td>
+                return (
+                  <tr key={lead.id} style={rowStyle}>
+                    <td style={cell}>{lead.name}</td>
+                    <td style={cell}>{lead.phone}</td>
+                    <td style={cell}><span style={bandStyle}>{lead.estimated_band}</span></td>
+                    <td style={cell}><span style={priorityStyle(priority)}>{priority}</span></td>
+                    <td style={cell}><span style={statusStyle(lead.status)}>{lead.status}</span></td>
+                    <td style={cell}>{new Date(lead.created_at).toLocaleString()}</td>
+                    <td style={cell}>
+                      <a href={`tel:${lead.phone}`}><button style={actionBtn}>📞</button></a>
+                      <a href={`https://wa.me/91${lead.phone}`} target="_blank"><button style={actionBtn}>💬</button></a>
+                      <button onClick={() => markContacted(lead.id)} style={actionBtn}>✓</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
 
-                </tr>
-              );
-            })}
-          </tbody>
+          </table>
+        </div>
 
-        </table>
-      </div>
+      )}
     </div>
   );
 }
@@ -240,6 +259,12 @@ const tableCardStyle = {
   padding: 15,
 };
 
+const cardMobile = {
+  background: "#fff",
+  padding: 15,
+  borderRadius: 10,
+};
+
 const headerRowStyle = {
   textAlign: "left",
   borderBottom: "1px solid #ddd",
@@ -249,32 +274,25 @@ const rowStyle = {
   borderBottom: "1px solid #eee",
 };
 
-const clickable = {
-  cursor: "pointer",
-};
+const clickable = { cursor: "pointer" };
 
-const cell = {
-  padding: "10px",
-};
+const cell = { padding: "10px" };
 
 const bandStyle = {
   background: "#e3f2fd",
   padding: "4px 6px",
   borderRadius: 6,
-  fontSize: 12,
 };
 
 const statusStyle = (status) => ({
   padding: "4px 6px",
   borderRadius: 6,
-  fontSize: 12,
   background: status === "CONTACTED" ? "#d4edda" : "#fff3cd",
 });
 
 const priorityStyle = (priority) => ({
   padding: "4px 6px",
   borderRadius: 6,
-  fontSize: 12,
   background:
     priority === "HOT"
       ? "#f8d7da"
