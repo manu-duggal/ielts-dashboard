@@ -1,9 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../services/supabaseClient";
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleLogin = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -22,21 +33,24 @@ export default function Login({ setUser }) {
   return (
     <div
       style={{
-        height: "100vh",
+        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
+        justifyContent: isMobile ? "flex-start" : "center",
         alignItems: "center",
+        paddingTop: isMobile ? 60 : 0,
+        paddingLeft: 15,
+        paddingRight: 15,
         background: "linear-gradient(135deg, #667eea, #764ba2)",
       }}
     >
 
-      {/* BRAND OUTSIDE */}
-      <div style={{ textAlign: "center", marginBottom: 30 }}>
+      {/* BRAND */}
+      <div style={{ textAlign: "center", marginBottom: isMobile ? 25 : 30 }}>
         <h1
           style={{
             color: "#fff",
-            fontSize: 40,
+            fontSize: isMobile ? 32 : 40,
             margin: 0,
             letterSpacing: 1,
           }}
@@ -48,7 +62,7 @@ export default function Login({ setUser }) {
           style={{
             color: "#e0e0e0",
             marginTop: 5,
-            fontSize: 14,
+            fontSize: isMobile ? 13 : 14,
           }}
         >
           Smart Lead Management System
@@ -59,11 +73,11 @@ export default function Login({ setUser }) {
       <div
         style={{
           background: "#fff",
-          padding: 40,
+          padding: isMobile ? 20 : 40,
           borderRadius: 12,
-          width: 340,
+          width: isMobile ? "100%" : 340,
+          maxWidth: 340,
           boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-          backdropFilter: "blur(10px)", // subtle effect
         }}
       >
 
@@ -79,7 +93,8 @@ export default function Login({ setUser }) {
           onChange={(e) => setEmail(e.target.value)}
           style={{
             width: "100%",
-            padding: 10,
+            padding: isMobile ? 12 : 10,
+            fontSize: isMobile ? 16 : 14,
             marginBottom: 15,
             borderRadius: 6,
             border: "1px solid #ccc",
@@ -94,7 +109,8 @@ export default function Login({ setUser }) {
           onChange={(e) => setPassword(e.target.value)}
           style={{
             width: "100%",
-            padding: 10,
+            padding: isMobile ? 12 : 10,
+            fontSize: isMobile ? 16 : 14,
             marginBottom: 20,
             borderRadius: 6,
             border: "1px solid #ccc",
@@ -106,7 +122,8 @@ export default function Login({ setUser }) {
           onClick={handleLogin}
           style={{
             width: "100%",
-            padding: 10,
+            padding: isMobile ? "12px" : "10px",
+            fontSize: isMobile ? 15 : 14,
             background: "#667eea",
             color: "#fff",
             border: "none",
